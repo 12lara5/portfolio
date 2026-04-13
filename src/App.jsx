@@ -657,7 +657,7 @@ function ProjectSpotlight() {
                 </div>
                 <LaptopMockup
                   label="route-optimizer.view"
-                  videoUrl="public/media/travel-swipe.mp4"
+                  videoUrl={`${import.meta.env.BASE_URL}media/travel-swipe.mp4`}
                   urlLabel="travel-route-swipe.app"
                 />
               </div>
@@ -764,7 +764,7 @@ function ProjectSpotlight() {
                   </div>
                 </div>
                 {/* Pipeline mockup */}
-                <PipelineMockup videoUrl="media/Demobutik.mp4" />
+                <PipelineMockup videoUrl={`${import.meta.env.BASE_URL}media/Demobutik.mp4`} />
               </div>
             </div>
 

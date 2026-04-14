@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import {
   motion,
   useInView,
@@ -8,7 +9,7 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import * as Icons from "lucide-react";
 
 const GitHub = Icons.GitBranchIcon;
@@ -123,8 +124,27 @@ function MagneticButton({ children, className, style, href, onClick, target, rel
   );
 }
 
+MagneticButton.propTypes = {
+  children: PropTypes.node.isRequired,
+  className: PropTypes.string,
+  style: PropTypes.object,
+  href: PropTypes.string,
+  onClick: PropTypes.func,
+  target: PropTypes.string,
+  rel: PropTypes.string,
+};
+
+MagneticButton.defaultProps = {
+  className: "",
+  style: {},
+  href: undefined,
+  onClick: undefined,
+  target: undefined,
+  rel: undefined,
+};
+
 /* ─── STAGGERED TEXT REVEAL ─── */
-function StaggerText({ text, className, style, delay = 0 }) {
+function StaggerText({ text, className, style, delay }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const words = text.split(" ");
@@ -133,7 +153,7 @@ function StaggerText({ text, className, style, delay = 0 }) {
     <span ref={ref} className={className} style={{ ...style, display: "flex", flexWrap: "wrap", gap: "0.25em" }}>
       {words.map((word, i) => (
         <motion.span
-          key={i}
+          key={`word-${word}-${i}`}
           initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
           animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
           transition={{ duration: 0.5, delay: delay + i * 0.06, ease: [0.25, 0.1, 0.25, 1] }}
@@ -146,6 +166,19 @@ function StaggerText({ text, className, style, delay = 0 }) {
   );
 }
 
+StaggerText.propTypes = {
+  text: PropTypes.string.isRequired,
+  className: PropTypes.string,
+  style: PropTypes.object,
+  delay: PropTypes.number,
+};
+
+StaggerText.defaultProps = {
+  className: "",
+  style: {},
+  delay: 0,
+};
+
 /* ─── ANIMATION HELPERS ─── */
 const stagger = { visible: { transition: { staggerChildren: 0.1 } } };
 const item = {
@@ -153,7 +186,7 @@ const item = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.25, 0.1, 0.25, 1] } },
 };
 
-function Section({ children, className = "", id }) {
+function Section({ children, className, id }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   return (
@@ -170,6 +203,17 @@ function Section({ children, className = "", id }) {
   );
 }
 
+Section.propTypes = {
+  children: PropTypes.node.isRequired,
+  className: PropTypes.string,
+  id: PropTypes.string,
+};
+
+Section.defaultProps = {
+  className: "",
+  id: undefined,
+};
+
 function SectionLabel({ children }) {
   return (
     <motion.div variants={item} className="flex items-center gap-3 mb-3">
@@ -180,6 +224,10 @@ function SectionLabel({ children }) {
     </motion.div>
   );
 }
+
+SectionLabel.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 function SectionTitle({ children }) {
   return (
@@ -192,6 +240,10 @@ function SectionTitle({ children }) {
     </motion.h2>
   );
 }
+
+SectionTitle.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 /* ─── NAV ─── */
 function Nav() {
@@ -213,9 +265,14 @@ function Nav() {
       style={scrolled || mobileOpen ? { backgroundColor: "rgba(5,5,5,0.95)" } : {}}
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="#" className="text-emerald-400 text-sm tracking-wider" style={{ fontFamily: "'Geist Mono', monospace" }}>
+        {/* FIX: replaced href="#" with a scroll-to-top button */}
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="text-emerald-400 text-sm tracking-wider bg-transparent border-0 cursor-pointer p-0"
+          style={{ fontFamily: "'Geist Mono', monospace" }}
+        >
           {"<lara.šare />"}
-        </a>
+        </button>
         <div className="hidden md:flex items-center gap-8">
           {links.map((l) => (
             <a
@@ -278,6 +335,11 @@ function Hero() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], [0, 150]);
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+
+  const socialLinks = [
+    { icon: <GitHub size={18} />, href: "https://github.com/12lara5", label: "GitHub" },
+    { icon: <Linkedin size={18} />, href: "https://linkedin.com/in/lara-š-465330224", label: "LinkedIn" },
+  ];
 
   return (
     <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -358,12 +420,9 @@ function Hero() {
           transition={{ delay: 0.8 }}
           className="flex justify-center gap-4 mt-8"
         >
-          {[
-            { icon: <GitHub size={18} />, href: "https://github.com/12lara5", label: "GitHub" },
-            { icon: <Linkedin size={18} />, href: "https://linkedin.com/in/lara-š-465330224", label: "LinkedIn" },
-          ].map((s, i) => (
+          {socialLinks.map((s) => (
             <a
-              key={i}
+              key={s.label}
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
@@ -393,7 +452,7 @@ function Hero() {
 }
 
 /* ─── LAPTOP MOCKUP ─── */
-function LaptopMockup({ label, videoUrl, urlLabel = "travel-route-swipe.app", accentColor = "rgba(16,185,129,0.04)", icon }) {
+function LaptopMockup({ label, videoUrl, urlLabel, accentColor, icon }) {
   return (
     <div className="relative w-full max-w-lg mx-auto select-none">
       <div
@@ -435,7 +494,7 @@ function LaptopMockup({ label, videoUrl, urlLabel = "travel-route-swipe.app", ac
                 <div className="mt-3 flex justify-center gap-1.5">
                   {[40, 60, 45, 70, 35].map((h, i) => (
                     <motion.div
-                      key={i}
+                      key={`bar-${h}-${i}`}
                       initial={{ height: 4 }}
                       animate={{ height: h * 0.4 }}
                       transition={{ delay: 0.3 + i * 0.1, duration: 0.6, ease: "easeOut" }}
@@ -459,7 +518,23 @@ function LaptopMockup({ label, videoUrl, urlLabel = "travel-route-swipe.app", ac
   );
 }
 
-/* ─── PIPELINE MOCKUP for Boutique ─── */
+LaptopMockup.propTypes = {
+  label: PropTypes.string,
+  videoUrl: PropTypes.string,
+  urlLabel: PropTypes.string,
+  accentColor: PropTypes.string,
+  icon: PropTypes.node,
+};
+
+LaptopMockup.defaultProps = {
+  label: "",
+  videoUrl: undefined,
+  urlLabel: "app.local",
+  accentColor: "rgba(16,185,129,0.04)",
+  icon: undefined,
+};
+
+/* ─── PIPELINE MOCKUP ─── */
 function PipelineMockup({ videoUrl }) {
   const steps = [
     { icon: <Image size={14} />, label: "Raw Photos", color: "rgba(245,158,11,0.6)" },
@@ -469,13 +544,19 @@ function PipelineMockup({ videoUrl }) {
     { icon: <Globe size={14} />, label: "Web Catalog", color: "rgba(16,185,129,0.9)" },
   ];
 
+  const logLines = [
+    { text: "✓ PS batch processed 48 images", color: "rgba(16,185,129,0.7)" },
+    { text: "✓ AI agent parsed metadata → DB", color: "rgba(16,185,129,0.7)" },
+    { text: "✓ 48 products inserted (SQL)", color: "rgba(16,185,129,0.7)" },
+    { text: "✓ Catalog rebuilt — 0 errors", color: "rgba(16,185,129,0.9)" },
+  ];
+
   return (
     <div className="relative w-full max-w-lg mx-auto select-none">
       <div
         className="relative rounded-2xl border-2 overflow-hidden"
         style={{ borderColor: "rgba(255,255,255,0.08)", background: "#0a0a0a" }}
       >
-        {/* Menu bar */}
         <div className="flex items-center gap-1.5 px-3 py-2 border-b border-white/5" style={{ backgroundColor: "#111" }}>
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.5)" }} />
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "rgba(234,179,8,0.5)" }} />
@@ -488,12 +569,10 @@ function PipelineMockup({ videoUrl }) {
           </span>
         </div>
 
-        {/* Pipeline content */}
         <div className="p-6" style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.04) 0%, rgba(5,5,5,1) 70%)" }}>
-          {/* Pipeline steps */}
           <div className="flex items-center justify-between gap-1 mb-6">
             {steps.map((s, i) => (
-              <div key={i} className="flex items-center gap-1 flex-1">
+              <div key={s.label} className="flex items-center gap-1 flex-1">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.7 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -523,7 +602,6 @@ function PipelineMockup({ videoUrl }) {
             ))}
           </div>
 
-          {/* Video or terminal log */}
           {videoUrl ? (
             <div className="rounded-lg overflow-hidden border border-white/5" style={{ backgroundColor: "#000" }}>
               <video
@@ -541,14 +619,9 @@ function PipelineMockup({ videoUrl }) {
                   agent.log
                 </span>
               </div>
-              {[
-                { text: "✓ PS batch processed 48 images", color: "rgba(16,185,129,0.7)" },
-                { text: "✓ AI agent parsed metadata → DB", color: "rgba(16,185,129,0.7)" },
-                { text: "✓ 48 products inserted (SQL)", color: "rgba(16,185,129,0.7)" },
-                { text: "✓ Catalog rebuilt — 0 errors", color: "rgba(16,185,129,0.9)" },
-              ].map((line, i) => (
+              {logLines.map((line, i) => (
                 <motion.p
-                  key={i}
+                  key={`log-${i}`}
                   initial={{ opacity: 0, x: -6 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.8 + i * 0.2, duration: 0.3 }}
@@ -561,7 +634,6 @@ function PipelineMockup({ videoUrl }) {
           )}
         </div>
       </div>
-      {/* Base */}
       <div className="flex justify-center">
         <div className="w-24 h-2 rounded-b-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
       </div>
@@ -572,8 +644,15 @@ function PipelineMockup({ videoUrl }) {
   );
 }
 
+PipelineMockup.propTypes = {
+  videoUrl: PropTypes.string,
+};
 
-/* ─── PROJECT SPOTLIGHT 1 — Travel Route Swipe ─── */
+PipelineMockup.defaultProps = {
+  videoUrl: undefined,
+};
+
+/* ─── PROJECT SPOTLIGHT ─── */
 function ProjectSpotlight() {
   const phases = [
     {
@@ -606,6 +685,50 @@ function ProjectSpotlight() {
   ];
 
   const tech = ["Java", "Google Maps API", "Nearest Neighbor Heuristic", "2-opt Optimization", "Backend Proxy", "REST", "Automated Testing"];
+
+  const boutiquePhases = [
+    {
+      icon: <Workflow size={22} />,
+      label: "Photoshop Automation",
+      color: "text-amber-400",
+      border: "border-amber-500/20",
+      bg: { backgroundColor: "rgba(245,158,11,0.05)" },
+      content: "Custom Photoshop script batch-processes raw product photos — selection, background removal/generation and export — cutting manual photo prep from hours to seconds.",
+    },
+    {
+      icon: <Bot size={22} />,
+      label: "Claude AI Agent",
+      color: "text-violet-400",
+      border: "border-violet-500/20",
+      bg: { backgroundColor: "rgba(99,102,241,0.05)" },
+      content: "AI agent reads processed product images, extracts metadata (name, category, price, description), and populates the SQL database.",
+    },
+    {
+      icon: <Globe size={22} />,
+      label: "Database & Web Catalog",
+      color: "text-sky-400",
+      border: "border-sky-500/20",
+      bg: { backgroundColor: "rgba(14,165,233,0.05)" },
+      content: "SQL database serves as the single source of truth. Frontend web catalog dynamically queries and displays products with filtering, search, and responsive layout — built for real commercial use.",
+    },
+  ];
+
+  const otherProjects = [
+    {
+      title: "Law Firm Website",
+      desc: "Client-facing website built with HTML & CSS for a law firm. Focused on UX/UI performance, clear information architecture, and professional stakeholder communication.",
+      tags: ["HTML", "CSS", "Client Work", "UX/UI"],
+      icon: <Globe size={18} />,
+      year: "2025",
+    },
+    {
+      title: "University CS Projects",
+      desc: "Built production-grade applications in Java, Python, and C covering optimization algorithms, data structures, OOP principles, and SQL database scalability.",
+      tags: ["Java", "Python", "C", "SQL", "Algorithms"],
+      icon: <Code2 size={18} />,
+      year: "2024–present",
+    },
+  ];
 
   return (
     <Section id="projects" className="py-16 md:py-24 px-6">
@@ -665,9 +788,9 @@ function ProjectSpotlight() {
 
             <div className="p-6 md:p-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {phases.map((p, i) => (
+                {phases.map((p) => (
                   <motion.div
-                    key={i}
+                    key={p.label}
                     variants={item}
                     whileHover={{ y: -4, scale: 1.01 }}
                     transition={{ duration: 0.2 }}
@@ -709,7 +832,6 @@ function ProjectSpotlight() {
             className="rounded-2xl border overflow-hidden"
             style={{ backgroundColor: "#0a0a0a", borderColor: "rgba(99,102,241,0.15)" }}
           >
-            {/* Top visual area */}
             <div
               className="relative p-8 md:p-12 border-b overflow-hidden"
               style={{ borderColor: "rgba(99,102,241,0.1)", background: "linear-gradient(135deg, rgba(99,102,241,0.06) 0%, #0a0a0a 70%)" }}
@@ -721,22 +843,13 @@ function ProjectSpotlight() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <span
-                      className="px-2.5 py-1 text-xs border rounded-full"
-                      style={{ fontFamily: "'Geist Mono', monospace", color: "rgba(167,139,250,0.9)", borderColor: "rgba(99,102,241,0.2)", backgroundColor: "rgba(99,102,241,0.06)" }}
-                    >
+                    <span className="px-2.5 py-1 text-xs border rounded-full" style={{ fontFamily: "'Geist Mono', monospace", color: "rgba(167,139,250,0.9)", borderColor: "rgba(99,102,241,0.2)", backgroundColor: "rgba(99,102,241,0.06)" }}>
                       Entrepreneurial
                     </span>
-                    <span
-                      className="px-2.5 py-1 text-xs border rounded-full"
-                      style={{ fontFamily: "'Geist Mono', monospace", color: "rgba(16,185,129,0.8)", borderColor: "rgba(16,185,129,0.15)", backgroundColor: "rgba(16,185,129,0.05)" }}
-                    >
+                    <span className="px-2.5 py-1 text-xs border rounded-full" style={{ fontFamily: "'Geist Mono', monospace", color: "rgba(16,185,129,0.8)", borderColor: "rgba(16,185,129,0.15)", backgroundColor: "rgba(16,185,129,0.05)" }}>
                       AI-Powered
                     </span>
-                    <span
-                      className="px-2.5 py-1 text-xs border rounded-full"
-                      style={{ fontFamily: "'Geist Mono', monospace", color: "rgba(14,165,233,0.8)", borderColor: "rgba(14,165,233,0.15)", backgroundColor: "rgba(14,165,233,0.05)" }}
-                    >
+                    <span className="px-2.5 py-1 text-xs border rounded-full" style={{ fontFamily: "'Geist Mono', monospace", color: "rgba(14,165,233,0.8)", borderColor: "rgba(14,165,233,0.15)", backgroundColor: "rgba(14,165,233,0.05)" }}>
                       Full-Stack
                     </span>
                   </div>
@@ -763,42 +876,15 @@ function ProjectSpotlight() {
                     ))}
                   </div>
                 </div>
-                {/* Pipeline mockup */}
                 <PipelineMockup videoUrl={`${import.meta.env.BASE_URL}media/Demobutik.mp4`} />
               </div>
             </div>
 
-            {/* Phase cards */}
             <div className="p-6 md:p-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {[
-                  {
-                    icon: <Workflow size={22} />,
-                    label: "Photoshop Automation",
-                    color: "text-amber-400",
-                    border: "border-amber-500/20",
-                    bg: { backgroundColor: "rgba(245,158,11,0.05)" },
-                    content: "Custom Photoshop script batch-processes raw product photos — selection, background removal/generation and export — cutting manual photo prep from hours to seconds.",
-                  },
-                  {
-                    icon: <Bot size={22} />,
-                    label: "Claude AI Agent",
-                    color: "text-violet-400",
-                    border: "border-violet-500/20",
-                    bg: { backgroundColor: "rgba(99,102,241,0.05)" },
-                    content: "AI agent reads processed product images, extracts metadata (name, category, price, description), and populates the SQL database.",
-                  },
-                  {
-                    icon: <Globe size={22} />,
-                    label: "Database & Web Catalog",
-                    color: "text-sky-400",
-                    border: "border-sky-500/20",
-                    bg: { backgroundColor: "rgba(14,165,233,0.05)" },
-                    content: "SQL database serves as the single source of truth. Frontend web catalog dynamically queries and displays products with filtering, search, and responsive layout — built for real commercial use.",
-                  },
-                ].map((p, i) => (
+                {boutiquePhases.map((p) => (
                   <motion.div
-                    key={i}
+                    key={p.label}
                     variants={item}
                     whileHover={{ y: -4, scale: 1.01 }}
                     transition={{ duration: 0.2 }}
@@ -817,7 +903,7 @@ function ProjectSpotlight() {
           </motion.div>
         </motion.div>
 
-        {/* Other Projects grid */}
+        {/* Other Projects */}
         <motion.div variants={item} className="mt-16">
           <h3 className="text-lg font-semibold text-white mb-6" style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}>
             Other Projects
@@ -825,24 +911,9 @@ function ProjectSpotlight() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {[
-            {
-              title: "Law Firm Website",
-              desc: "Client-facing website built with HTML & CSS for a law firm. Focused on UX/UI performance, clear information architecture, and professional stakeholder communication.",
-              tags: ["HTML", "CSS", "Client Work", "UX/UI"],
-              icon: <Globe size={18} />,
-              year: "2025",
-            },
-            {
-              title: "University CS Projects",
-              desc: "Built production-grade applications in Java, Python, and C covering optimization algorithms, data structures, OOP principles, and SQL database scalability.",
-              tags: ["Java", "Python", "C", "SQL", "Algorithms"],
-              icon: <Code2 size={18} />,
-              year: "2024–present",
-            },
-          ].map((p, i) => (
+          {otherProjects.map((p) => (
             <motion.div
-              key={i}
+              key={p.title}
               variants={item}
               whileHover={{ y: -5, borderColor: "rgba(16,185,129,0.25)" }}
               transition={{ duration: 0.2 }}
@@ -892,6 +963,11 @@ function Skills() {
     { icon: <Layers size={18} />, label: "Scalability Analysis" },
   ];
 
+  const languages = [
+    { flag: "🇭🇷", lang: "Croatian — Native" },
+    { flag: "🇬🇧", lang: "English — Fluent" },
+  ];
+
   return (
     <Section id="skills" className="py-16 md:py-24 px-6">
       <div className="max-w-6xl mx-auto">
@@ -901,9 +977,9 @@ function Skills() {
         </SectionTitle>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          {stack.map((s, i) => (
+          {stack.map((s) => (
             <motion.div
-              key={i}
+              key={s.name}
               variants={item}
               whileHover={{ y: -4, borderColor: "rgba(16,185,129,0.3)" }}
               transition={{ duration: 0.2 }}
@@ -938,9 +1014,9 @@ function Skills() {
             Enrolled in a QA Engineering bootcamp focused on software quality, automated testing pipelines, and agile problem-solving methodologies — because building scalable web solutions means knowing how to verify they work under every condition.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {mastering.map((m, i) => (
+            {mastering.map((m) => (
               <motion.div
-                key={i}
+                key={m.label}
                 variants={item}
                 className="flex items-center gap-2.5 px-4 py-3 rounded-lg border border-white/5"
                 style={{ backgroundColor: "rgba(255,255,255,0.02)" }}
@@ -953,11 +1029,8 @@ function Skills() {
         </motion.div>
 
         <motion.div variants={item} className="mt-8 flex flex-wrap gap-4">
-          {[
-            { flag: "🇭🇷", lang: "Croatian — Native" },
-            { flag: "🇬🇧", lang: "English — Fluent" },
-          ].map((l, i) => (
-            <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/5" style={{ backgroundColor: "#0a0a0a" }}>
+          {languages.map((l) => (
+            <div key={l.lang} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/5" style={{ backgroundColor: "#0a0a0a" }}>
               <span className="text-sm">{l.flag}</span>
               <span className="text-neutral-400 text-xs whitespace-nowrap">{l.lang}</span>
             </div>
@@ -1024,9 +1097,9 @@ function Experience() {
         <div className="relative">
           <div className="absolute top-2 bottom-2 w-px" style={{ left: "19px", backgroundColor: "rgba(255,255,255,0.05)" }} />
           <div className="space-y-8">
-            {timeline.map((t, i) => (
+            {timeline.map((t) => (
               <motion.div
-                key={i}
+                key={`${t.title}-${t.period}`}
                 variants={item}
                 whileHover={{ x: 4 }}
                 transition={{ duration: 0.2 }}
@@ -1059,6 +1132,16 @@ function Experience() {
 
 /* ─── CONTACT ─── */
 function Contact() {
+  const contactLinks = [
+    { href: "mailto:lara.sare.hr@gmail.com", icon: <Mail size={16} />, label: "lara.sare.hr@gmail.com" },
+    { href: "tel:+385955634919", icon: <Phone size={16} />, label: "+385 95 563 4919" },
+  ];
+
+  const socialLinks = [
+    { icon: <GitHub size={20} />, href: "https://github.com/12lara5", label: "GitHub" },
+    { icon: <Linkedin size={20} />, href: "https://linkedin.com/in/lara-š-465330224", label: "LinkedIn" },
+  ];
+
   return (
     <Section id="contact" className="py-16 md:py-24 px-6">
       <div className="max-w-6xl mx-auto text-center">
@@ -1067,36 +1150,23 @@ function Contact() {
           <StaggerText text="Let's Connect" style={{ fontFamily: "'Instrument Serif', Georgia, serif", justifyContent: "center" }} />
         </SectionTitle>
 
-        <motion.p
-          variants={item}
-          className="text-neutral-400 text-sm md:text-base max-w-lg mx-auto mb-10 leading-relaxed"
-        >
-        </motion.p>
-
         <motion.div variants={item} className="flex flex-wrap justify-center gap-4 mb-12">
-          <MagneticButton
-            href="mailto:lara.sare.hr@gmail.com"
-            className="inline-flex items-center gap-2.5 px-5 py-3 rounded-lg border border-white/10 text-neutral-300 hover:text-emerald-400 hover:border-emerald-500/30 transition-all duration-300 text-sm"
-            style={{ backgroundColor: "rgba(255,255,255,0.02)" }}
-          >
-            <Mail size={16} /> lara.sare.hr@gmail.com
-          </MagneticButton>
-          <MagneticButton
-            href="tel:+385955634919"
-            className="inline-flex items-center gap-2.5 px-5 py-3 rounded-lg border border-white/10 text-neutral-300 hover:text-emerald-400 hover:border-emerald-500/30 transition-all duration-300 text-sm"
-            style={{ backgroundColor: "rgba(255,255,255,0.02)" }}
-          >
-            <Phone size={16} /> +385 95 563 4919
-          </MagneticButton>
+          {contactLinks.map((c) => (
+            <MagneticButton
+              key={c.label}
+              href={c.href}
+              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-lg border border-white/10 text-neutral-300 hover:text-emerald-400 hover:border-emerald-500/30 transition-all duration-300 text-sm"
+              style={{ backgroundColor: "rgba(255,255,255,0.02)" }}
+            >
+              {c.icon} {c.label}
+            </MagneticButton>
+          ))}
         </motion.div>
 
         <motion.div variants={item} className="flex justify-center gap-5">
-          {[
-            { icon: <GitHub size={20} />, href: "https://github.com/12lara5", label: "GitHub" },
-            { icon: <Linkedin size={20} />, href: "https://linkedin.com/in/lara-š-465330224", label: "LinkedIn" },
-          ].map((s, i) => (
+          {socialLinks.map((s) => (
             <MagneticButton
-              key={i}
+              key={s.label}
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
@@ -1118,7 +1188,7 @@ function Footer() {
     <footer className="border-t border-white/5 py-8 px-6">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-xs text-neutral-600" style={{ fontFamily: "'Geist Mono', monospace" }}>
-          © 2026 Lara Šare. 
+          © 2026 Lara Šare.
         </p>
         <p className="text-xs text-neutral-700" style={{ fontFamily: "'Geist Mono', monospace" }}>
           Designed to impress.
